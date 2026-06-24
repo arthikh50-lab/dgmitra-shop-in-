@@ -1,0 +1,184 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "bio": { "type": "string" },
+        "savedAddresses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "street": { "type": "string" },
+              "city": { "type": "string" },
+              "pincode": { "type": "string" },
+              "phone": { "type": "string" }
+            }
+          }
+        },
+        "stylePreferences": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "instagramUrl": { "type": "string" },
+        "portfolioUrl": { "type": "string" },
+        "isDisabled": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Clothing redesign order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "pending", "pickup_scheduled", "in_progress", "quality_check", "shipped", "delivered", "cancelled"] },
+        "serviceType": { "type": "string", "enum": ["Embroidery", "Painting", "Printing", "Patchwork", "Full Transformation"] },
+        "fabric": { "type": "string" },
+        "condition": { "type": "string" },
+        "notes": { "type": "string" },
+        "price": { "type": "number" },
+        "originalImageUrl": { "type": "string" },
+        "designPreviewUrl": { "type": "string" },
+        "designImageURL": { "type": "string" },
+        "customLogoUrl": { "type": "string" },
+        "customLogoAdjustments": {
+          "type": "object",
+          "properties": {
+            "brightness": { "type": "number" },
+            "contrast": { "type": "number" },
+            "rotation": { "type": "number" }
+          }
+        },
+        "customization": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["gallery", "upload"] },
+            "id": { "type": "string" },
+            "url": { "type": "string" },
+            "fee": { "type": "number" },
+            "previewUrl": { "type": "string" }
+          }
+        },
+        "aiResult": { "type": "object" },
+        "deliveryAddress": {
+          "type": "object",
+          "properties": {
+            "street": { "type": "string" },
+            "city": { "type": "string" },
+            "pincode": { "type": "string" },
+            "phone": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "status", "serviceType", "price"]
+    },
+    "GalleryItem": {
+      "title": "Gallery Item",
+      "description": "Item displayed in the design gallery",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["Embroidery", "Painting", "Printing", "Patchwork"] },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "imageUrl"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Store product or new arrival",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "isNewArrival": { "type": "boolean" },
+        "isAvailable": { "type": "boolean" },
+        "customizableWith": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["embroidery", "painting", "printing"] }
+        },
+        "galleryDesignOptions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of GalleryItem IDs that are compatible with this product"
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "imageUrl", "isNewArrival"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer review of a finished product",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPhoto": { "type": "string" },
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+        "comment": { "type": "string" },
+        "productImageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "rating", "comment", "productImageUrl"]
+    },
+    "UserDesign": {
+      "title": "User Design",
+      "description": "A design uploaded by a user for a specific product",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "productId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "productId", "imageUrl"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Redesign order documents"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Store products and new arrivals"
+    },
+    "/gallery/{itemId}": {
+      "schema": "GalleryItem",
+      "description": "Items displayed in the gallery"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Customer reviews"
+    },
+    "/user_designs/{designId}": {
+      "schema": "UserDesign",
+      "description": "Designs uploaded by users"
+    }
+  }
+}

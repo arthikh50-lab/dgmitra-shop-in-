@@ -1,0 +1,8 @@
+{
+  "name": " DG MITRA FOR ALL",
+  "description": "Transform your old clothes into unique designe pieces using AI- suggestions, embroidery, hand painting, and sustainable fashion practices.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
