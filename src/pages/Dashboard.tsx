@@ -1099,7 +1099,7 @@ export default function Dashboard() {
               <div className="space-y-6">
                 <div className="flex flex-col items-center gap-4 mb-4">
                   <div className="w-24 h-24 bg-brand-beige rounded-full overflow-hidden border-4 border-white shadow-md">
-                    <img src={profileForm.photoURL || user.photoURL || ''} alt="Preview" className="w-full h-full object-cover" />
+                    {(profileForm.photoURL || user.photoURL) && <img src={profileForm.photoURL || user.photoURL} alt="Preview" className="w-full h-full object-cover" />}
                   </div>
                   <p className="text-xs text-gray-400">Preview of your profile photo</p>
                 </div>

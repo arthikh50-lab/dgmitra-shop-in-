@@ -28,7 +28,11 @@ export default function Login() {
     try {
       await loginWithGoogleFirebase();
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+      if (err.code === 'auth/unauthorized-domain') {
+        setError(`This domain (${window.location.hostname}) is not authorized for OAuth operations. Please add it in the Firebase Console -> Authentication -> Settings -> Authorized domains.`);
+      } else {
+        setError(err.message || 'Failed to sign in with Google');
+      }
       setIsSubmitting(false);
     }
   };

@@ -458,7 +458,7 @@ export default function AdminPanel() {
         <div className="mt-auto pt-6 border-t border-white/10">
           <div className="flex items-center gap-3 mb-6 px-2">
             <div className="w-8 h-8 rounded-full bg-brand-green/20 overflow-hidden">
-              <img src={user?.photoURL || ''} alt="Admin" className="w-full h-full object-cover" />
+              {user?.photoURL && <img src={user.photoURL} alt="Admin" className="w-full h-full object-cover" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold truncate">{user?.displayName}</p>

@@ -649,7 +649,7 @@ export default function ProductDetail() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100">
-                    <img src={customizationPreview || ''} alt="Selected" className="w-full h-full object-cover" />
+                    {customizationPreview && <img src={customizationPreview} alt="Selected" className="w-full h-full object-cover" />}
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Selected Art</p>
