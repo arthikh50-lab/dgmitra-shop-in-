@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, onAuthStateChanged } from './firebaseAuth';
-import { supabase } from './supabase';
+import { db, doc, getDoc, setDoc, onSnapshot } from './firebase';
 
 interface AuthContextType {
   user: any | null;
@@ -32,62 +32,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    let channel: any;
+    let unsubscribeSnapshot: any;
     
     if (user) {
       const fetchProfile = async () => {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('uid', user.id)
-          .single();
+        const userRef = doc(db, 'users', user.id);
+        
+        try {
+          const userSnap = await getDoc(userRef);
           
-        if (data) {
-          if (data.isDisabled) {
-            await auth.signOut();
-            alert("Your account has been disabled by an administrator.");
-            setProfile(null);
-            setUser(null);
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            if (data.isDisabled) {
+              await auth.signOut();
+              alert("Your account has been disabled by an administrator.");
+              setProfile(null);
+              setUser(null);
+            } else {
+              setProfile({ id: userSnap.id, ...data });
+            }
           } else {
-            setProfile(data);
+            // Profile doesn't exist, create it
+            const newProfile = { uid: user.id, email: user.email, role: 'user', createdAt: new Date().toISOString() };
+            await setDoc(userRef, newProfile);
+            setProfile({ id: user.id, ...newProfile });
           }
-        } else if (error && error.code === 'PGRST116') {
-          // Profile doesn't exist, create it
-          const { data: newProfile, error: insertError } = await supabase
-            .from('users')
-            .insert([
-              { uid: user.id, email: user.email, role: 'user' }
-            ])
-            .select()
-            .single();
-            
-          if (!insertError && newProfile) {
-            setProfile(newProfile);
-          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
         }
+        
         setLoading(false);
       };
 
       fetchProfile();
 
-      channel = supabase
-        .channel(`public:users:uid=eq.${user.id}`)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `uid=eq.${user.id}` }, (payload) => {
-          if (payload.new.isDisabled) {
+      unsubscribeSnapshot = onSnapshot(doc(db, 'users', user.id), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.isDisabled) {
             auth.signOut();
             alert("Your account has been disabled by an administrator.");
             setProfile(null);
             setUser(null);
           } else {
-            setProfile(payload.new);
+            setProfile({ id: docSnap.id, ...data });
           }
-        })
-        .subscribe();
+        }
+      });
     }
     
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
       }
     };
   }, [user]);

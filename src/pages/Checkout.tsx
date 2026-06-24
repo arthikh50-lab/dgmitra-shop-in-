@@ -8,7 +8,7 @@ import {
   MapPin, Phone, CheckCircle2, Loader2, Sparkles 
 } from 'lucide-react';
 import { formatCurrency, cn } from '../utils';
-import { supabase } from '../supabase';
+
 import SEO from '../components/SEO';
 
 declare global {
@@ -144,11 +144,11 @@ export default function Checkout() {
         designImageURL: null
       };
 
-      const { data, error } = await supabase.from('orders').insert([orderRecord]).select().single();
-      if (error) throw error;
+      const { db, collection, addDoc } = await import('../firebase');
+      const orderRef = await addDoc(collection(db, 'orders'), orderRecord);
       
       clearCart();
-      navigate(`/order-success/${data.id}`);
+      navigate(`/order-success/${orderRef.id}`);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to save order.');

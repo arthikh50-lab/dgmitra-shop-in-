@@ -2,7 +2,7 @@ import { useState, useEffect, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Sparkles, Paintbrush, Scissors, Recycle, Star, ChevronRight, ShoppingBag, ImageIcon, Upload, Loader2, CheckCircle2, MessageSquare, X, Smartphone, Wand2, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../supabase';
+import { db, collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from '../firebase';
 import { formatCurrency, cn } from '../utils';
 import { useAuth } from '../AuthContext';
 import { QuotaErrorBanner } from '../components/QuotaErrorBanner';
@@ -27,53 +27,51 @@ export default function Home() {
 
   const fetchHomeData = async () => {
     setIsLoading(true);
-    let hasQuotaError = false;
     try {
       // Fetch New Arrivals
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .eq('isNewArrival', true)
-        .order('createdAt', { ascending: false })
-        .limit(4);
-      
-      if (productsError) throw productsError;
-      setNewArrivals(productsData || []);
+      const productsQuery = query(
+        collection(db, 'products'),
+        where('isNewArrival', '==', true),
+        orderBy('createdAt', 'desc'),
+        limit(4)
+      );
+      const productsSnap = await getDocs(productsQuery);
+      setNewArrivals(productsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
 
       // Fetch Featured Gallery
-      const { data: galleryData, error: galleryError } = await supabase
-        .from('gallery')
-        .select('*')
-        .order('createdAt', { ascending: false })
-        .limit(4);
-      
-      if (galleryError) throw galleryError;
-      setFeaturedGallery(galleryData || []);
+      const galleryQuery = query(
+        collection(db, 'gallery'),
+        orderBy('createdAt', 'desc'),
+        limit(4)
+      );
+      const gallerySnap = await getDocs(galleryQuery);
+      setFeaturedGallery(gallerySnap.docs.map(d => ({ id: d.id, ...d.data() })));
 
       // Fetch Reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select('*')
-        .order('createdAt', { ascending: false })
-        .limit(6);
-      
-      if (reviewsError) throw reviewsError;
-      setReviews(reviewsData || []);
+      const reviewsQuery = query(
+        collection(db, 'reviews'),
+        orderBy('createdAt', 'desc'),
+        limit(6)
+      );
+      const reviewsSnap = await getDocs(reviewsQuery);
+      setReviews(reviewsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
 
       // Check for completed orders
       if (user) {
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select('id')
-          .eq('userId', user.id)
-          .eq('status', 'delivered')
-          .limit(1);
-          
-        if (ordersError) throw ordersError;
-        setHasCompletedOrder(ordersData && ordersData.length > 0);
+        const ordersQuery = query(
+          collection(db, 'orders'),
+          where('userId', '==', user.id),
+          where('status', '==', 'delivered'),
+          limit(1)
+        );
+        const ordersSnap = await getDocs(ordersQuery);
+        setHasCompletedOrder(!ordersSnap.empty);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching home data:", error);
+      if (error?.code === 'resource-exhausted') {
+        setQuotaExceeded(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -100,17 +98,15 @@ export default function Home() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('reviews').insert([{
+      await addDoc(collection(db, 'reviews'), {
         userId: user.id,
         userName: profile?.displayName || user.email?.split('@')[0] || 'Anonymous',
         userPhoto: profile?.photoURL || user?.user_metadata?.avatar_url || '',
         rating,
         comment,
         productImageUrl: productImage,
-        createdAt: new Date().toISOString()
-      }]);
-      
-      if (error) throw error;
+        createdAt: serverTimestamp()
+      });
       
       setSubmitSuccess(true);
       setComment('');
